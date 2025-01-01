@@ -14,11 +14,8 @@ COPY . /app
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-
-
-
 # Expose port
-EXPOSE 5000
+EXPOSE 5001
 
 # Run the application
 CMD ["python", "/app/Twitter_Sentiment_Indian_Election_2019/src/main/app.py"]
