@@ -1,6 +1,8 @@
 import os
+import json
 
 import joblib
+import mlflow
 import pandas as pd
 from flask import Flask, request, jsonify
 
@@ -104,5 +106,53 @@ def predict_sentiment_best_model():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/mlops/list_mlflow_experiments', methods=['GET'])
+def list_mlflow_experiments():
+    experiments = mlflow.search_experiments(filter_string=f'name="Twitter_Sentiment_Analysis"')
+    experiment_results = []
+
+
+    # Loop through each experiment
+    for experiment in experiments:
+        experiment_id = experiment.experiment_id
+        experiment_name = experiment.name
+        experiment_results = []
+        # Get all runs for this experiment
+        runs = mlflow.search_runs(experiment_ids=[experiment_id])
+
+        # Loop through each run
+        for _, run in runs.iterrows():
+            run_id = run['run_id']
+
+            # Fetch parameters and metrics from the run
+            params = mlflow.get_run(run_id).data.params
+            metrics = mlflow.get_run(run_id).data.metrics
+
+            # Extract relevant parameters (you can add more as needed)
+            best_params = params.get('best parameters', 'N/A')
+
+
+            # Extract accuracy and other metrics (precision, recall, F1 score)
+            accuracy = metrics.get('accuracy', 'N/A')
+            precision = metrics.get('precision', 'N/A')
+            recall = metrics.get('recall', 'N/A')
+            f1_score = metrics.get('f1_score', 'N/A')
+
+            # Append the details to the results list
+            experiment_results.append({
+                "Experiment ID": experiment_id,
+                "Experiment Name": experiment_name,
+                "Run ID": run_id,
+                "Model Name": "Twitter Sentiment Analysis",
+                "Accuracy": accuracy,
+                "Precision": precision,
+                "Recall": recall,
+                "F1 Score": f1_score,
+                "Best params found": best_params
+            })
+
+    return jsonify({"experiment_results":experiment_results}), 200
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug = True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

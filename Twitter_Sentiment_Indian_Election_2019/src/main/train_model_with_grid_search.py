@@ -10,6 +10,8 @@ from sklearn.pipeline import Pipeline
 from Twitter_Sentiment_Indian_Election_2019.src.main.download_nlp_dependencies import download_nlp
 from Twitter_Sentiment_Indian_Election_2019.src.main.preprocess_text import preprocess
 
+import mlflow
+
 
 def train_model_with_gs(df_local, param_grid):
     download_nlp()
@@ -31,15 +33,29 @@ def train_model_with_gs(df_local, param_grid):
 
     # Perform GridSearchCV
     grid_search = GridSearchCV(pipeline, param_grid, cv=5, n_jobs=-1, verbose=2, scoring='accuracy')
-    grid_search.fit(documents, labels)
+
+    mlflow.set_experiment('Twitter_Sentiment_Analysis')
+
+    with mlflow.start_run():
+        grid_search.fit(documents, labels)
+
+        best_model = grid_search.best_estimator_
+        lr_y_predictions = best_model.predict(x_test)
+        elapsed_time = time.time() - start_time
+
+        model_scores = calculate_perf_stats(y_test, lr_y_predictions, elapsed_time)
+        mlflow.sklearn.log_model(best_model, "best_model")
+        mlflow.log_metric('accuracy', model_scores["accuracy"])
+        mlflow.log_metric('precision', model_scores["precision"])
+        mlflow.log_metric('recall', model_scores["recall"])
+        mlflow.log_metric('f1_score', model_scores["f1_score"])
+        mlflow.log_param("best parameters", grid_search.best_params_)
+
+
 
     print(f"Best parameters found: {grid_search.best_params_}")
-    best_model = grid_search.best_estimator_
     joblib.dump(best_model, 'best_model_twitter_senti.pkl')  # Save the entire model as a pickle file
 
-    lr_y_predictions = best_model.predict(x_test)
-    elapsed_time = time.time() - start_time
-    model_scores = {"Logistic Regression": calculate_perf_stats(y_test, lr_y_predictions, elapsed_time)}
 
 
     return best_model, grid_search.best_params_, model_scores, grid_search.cv_results_
