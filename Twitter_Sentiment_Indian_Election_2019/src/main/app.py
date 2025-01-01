@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from flask import Flask, request, jsonify
 
@@ -6,7 +8,9 @@ from Twitter_Sentiment_Indian_Election_2019.src.main.train_model import train_mo
 
 app = Flask(__name__)
 
-df_local = pd.read_csv("../../data/Twitter_Data_1K_rows.csv")
+data_file_path = os.getenv("DATA_FILE_PATH")
+
+df_local = pd.read_csv(data_file_path)
 
 model, vectorizer, evaluation_scores, cv_scores = train_model_with_cv(df_local)
 
@@ -32,4 +36,4 @@ def predict_sentiment():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0')

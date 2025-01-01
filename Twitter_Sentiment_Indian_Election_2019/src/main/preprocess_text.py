@@ -4,7 +4,9 @@ from nltk import word_tokenize, WordNetLemmatizer
 from nltk.corpus import stopwords
 
 
+
 def preprocess(text):
+
     # Check if the input is a string
     if not isinstance(text, str):
         return ""  # Return an empty string for non-string entries or NaN

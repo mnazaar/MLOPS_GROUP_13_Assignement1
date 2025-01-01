@@ -3,18 +3,22 @@ FROM python:3.9.13
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Set the Python path to include /app
+ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV DATA_FILE_PATH=/app/Twitter_Sentiment_Indian_Election_2019/data/Twitter_Data_1K_rows.csv
+
+
+# Copy only the necessary files
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the trained model (if necessary)
-# COPY model.pkl /app/model.pkl
 
-# Expose the port the app runs on
+
+
+# Expose port
 EXPOSE 5000
 
-
 # Run the application
-CMD ["python", "/app/src/main/app.py"]
+CMD ["python", "/app/Twitter_Sentiment_Indian_Election_2019/src/main/app.py"]

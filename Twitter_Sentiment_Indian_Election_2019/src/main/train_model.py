@@ -6,10 +6,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, recall_score, precision_score, accuracy_score
 from sklearn.model_selection import cross_val_score, train_test_split
 
+from Twitter_Sentiment_Indian_Election_2019.src.main.download_nlp_dependencies import download_nlp
 from Twitter_Sentiment_Indian_Election_2019.src.main.preprocess_text import preprocess
 
 
 def train_model_with_cv(df_local, min_df_hyper=0.001):
+    download_nlp()
     df_local['cleaner_text'] = df_local['clean_text'].apply(preprocess)
     df_local = df_local.dropna(subset=['category'])
     df_local = df_local.dropna(subset=['cleaner_text'])
