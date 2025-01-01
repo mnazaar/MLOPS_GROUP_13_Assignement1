@@ -2,5 +2,4 @@
 /Twitter_Sentiment_Indian_Election_2019/src/main/__pycache__/
 /Twitter_Sentiment_Indian_Election_2019/src/tests/__pycache__/
 /.idea/
-/Twitter_Sentiment_Indian_Election_2019/data/
-!Twitter_Sentiment_Indian_Election_2019/data/*.dvc
+/Twitter_Sentiment_Indian_Election_2019/data/*csv
