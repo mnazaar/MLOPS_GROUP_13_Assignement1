@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-
+import os
 from Twitter_Sentiment_Indian_Election_2019.src.main.download_nlp_dependencies import download_nlp
 from Twitter_Sentiment_Indian_Election_2019.src.main.preprocess_text import preprocess
 
@@ -18,8 +18,10 @@ def test_preprocess(text, expected_output):
     download_nlp()
     assert preprocess(text) == expected_output
 
+data_file_path = os.getenv("DATA_FILE_PATH")
+
 
 def test_preprocess_on_csv():
     download_nlp()
-    df = pd.read_csv("../../data/Twitter_Data_1K_rows.csv")
+    df = pd.read_csv(data_file_path)
     assert preprocess

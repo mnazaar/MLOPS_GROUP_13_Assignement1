@@ -14,7 +14,6 @@ pkl_file_path = os.getenv("PKL_FILE_PATH")
 
 df_global = pd.read_csv(data_file_path)
 
-model, vectorizer, evaluation_scores, cv_scores = train_model_with_cv(df_global)
 best_model = None
 loaded_model_from_mlflow = None
 
@@ -38,6 +37,8 @@ def predict_sentiment():
             return jsonify({"error": "No sentence provided"}), 400
 
         # Predict sentiment using the model
+        model, vectorizer, evaluation_scores, cv_scores = train_model_with_cv(df_global)
+
         predicted_class = predict(model, vectorizer, sentence)
         predicted_class_string = translate_to_english(predicted_class)
         response = {
@@ -199,6 +200,10 @@ def list_mlflow_experiments():
 
     return jsonify({"experiment_results": experiment_results}), 200
 
+
+@app.route('/mlops/test_service_after_deploy', methods=['GET'])
+def test_service_after_deploy():
+    return "App is running good and accessible"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
