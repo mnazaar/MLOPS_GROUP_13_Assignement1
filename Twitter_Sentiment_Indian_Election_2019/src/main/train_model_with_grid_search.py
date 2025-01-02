@@ -1,3 +1,4 @@
+import os
 import time
 
 import joblib
@@ -12,6 +13,7 @@ from Twitter_Sentiment_Indian_Election_2019.src.main.preprocess_text import prep
 
 import mlflow
 
+pkl_file_path = os.getenv("PKL_FILE_PATH")
 
 def train_model_with_gs(df_local, param_grid):
     download_nlp()
@@ -34,6 +36,10 @@ def train_model_with_gs(df_local, param_grid):
     # Perform GridSearchCV
     grid_search = GridSearchCV(pipeline, param_grid, cv=5, n_jobs=-1, verbose=2, scoring='accuracy')
 
+    mlflow.set_tracking_uri('http://localhost:5000')
+    if not mlflow.get_experiment_by_name('Twitter_Sentiment_Analysis'):
+        mlflow.create_experiment('Twitter_Sentiment_Analysis')
+
     mlflow.set_experiment('Twitter_Sentiment_Analysis')
 
     with mlflow.start_run():
@@ -51,12 +57,8 @@ def train_model_with_gs(df_local, param_grid):
         mlflow.log_metric('f1_score', model_scores["f1_score"])
         mlflow.log_param("best parameters", grid_search.best_params_)
 
-
-
     print(f"Best parameters found: {grid_search.best_params_}")
-    joblib.dump(best_model, 'best_model_twitter_senti.pkl')  # Save the entire model as a pickle file
-
-
+    joblib.dump(best_model, pkl_file_path)  # Save the entire model as a pickle file
 
     return best_model, grid_search.best_params_, model_scores, grid_search.cv_results_
 

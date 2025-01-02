@@ -1,11 +1,8 @@
 import os
-import json
-
 import joblib
 import mlflow
 import pandas as pd
 from flask import Flask, request, jsonify
-
 from Twitter_Sentiment_Indian_Election_2019.src.main.predict import predict
 from Twitter_Sentiment_Indian_Election_2019.src.main.train_model import train_model_with_cv
 from Twitter_Sentiment_Indian_Election_2019.src.main.train_model_with_grid_search import train_model_with_gs
@@ -13,10 +10,13 @@ from Twitter_Sentiment_Indian_Election_2019.src.main.train_model_with_grid_searc
 app = Flask(__name__)
 
 data_file_path = os.getenv("DATA_FILE_PATH")
+pkl_file_path = os.getenv("PKL_FILE_PATH")
 
 df_global = pd.read_csv(data_file_path)
 
 model, vectorizer, evaluation_scores, cv_scores = train_model_with_cv(df_global)
+best_model = None
+loaded_model_from_mlflow = None
 
 # Hyperparameter grid for both TfidfVectorizer and Logistic Regression
 param_grid = {
@@ -40,9 +40,13 @@ def predict_sentiment():
         # Predict sentiment using the model
         predicted_class = predict(model, vectorizer, sentence)
         predicted_class_string = translate_to_english(predicted_class)
+        response = {
+            "predicted_class": str(predicted_class),
+            "Equivalent english translation": predicted_class_string
+        }
 
         # Return the predicted class as a JSON response
-        return jsonify({"predicted_class": predicted_class, "Equivalent english translation": predicted_class_string}), 200
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -53,27 +57,24 @@ def translate_to_english(predicted_class):
         predicted_class_string = "Neutral Sentiment"
     elif predicted_class == 1:
         predicted_class_string = "Positive Sentiment"
-    elif predicted_class == -1:
+    else:
         predicted_class_string = "Negative Sentiment"
     return predicted_class_string
 
 
-train_model_with_gs(df_global, param_grid)
-
-
 @app.route('/mlops/retrain_on_demand', methods=['POST'])
 def on_demand_retrain():
-    global param_grid
+    global param_grid, best_model
 
     try:
-        best_model, best_params, evaluation_scores, cv_scores = train_model_with_gs(df_global, param_grid)
+        best_model, best_params, evaluation_scores_, cv_scores_ = train_model_with_gs(df_global, param_grid)
     except Exception as e:
         return jsonify({"error": f"Model training failed: {str(e)}"}), 500
 
     # Prepare the response
     response = {
         "best_params": best_params,
-        "evaluation_scores": evaluation_scores
+        "evaluation_scores": evaluation_scores_
     }
 
     return jsonify(response), 200
@@ -89,7 +90,15 @@ def predict_sentiment_best_model():
         if not sentence:
             return jsonify({"error": "No sentence provided"}), 400
 
-        best_model = joblib.load('best_model_twitter_senti.pkl')  # Replace with your actual file path
+        global best_model
+
+        if best_model is None:
+            try:
+                best_model = joblib.load(pkl_file_path)
+            except FileNotFoundError:
+                return jsonify("Error: The file 'best_model_twitter_senti.pkl' was not found. Please train the model "
+                               "first using http://localhost:5000/mlops/retrain_on_demand"), 500
+
 
         if best_model is None:
             return jsonify({"error": "Model not trained yet"}), 400
@@ -98,19 +107,58 @@ def predict_sentiment_best_model():
 
         predicted_class_string = translate_to_english(predictions[0])
 
-
+        response = {
+            "predicted_class": str(predictions[0]),
+            "Equivalent english translation": predicted_class_string
+        }
         # Return the predicted class as a JSON response
-        return jsonify({"predicted_class": predictions[0], "Translated equivalent": predicted_class_string}), 200
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
+
+@app.route('/mlops/predict_sentiment_best_model_mlflow', methods=['GET'])
+def predict_sentiment_best_model_mlflow():
+    try:
+        # Get the sentence from the POST request
+        data = request.get_json()
+        sentence = data.get('sentence', None)
+
+        if not sentence:
+            return jsonify({"error": "No sentence provided"}), 400
+
+        mlflow.set_tracking_uri('http://localhost:5000')
+        mlflow.set_experiment('Twitter_Sentiment_Analysis')
+        experiment = mlflow.get_experiment_by_name('Twitter_Sentiment_Analysis')
+        runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
+
+        latest_run = runs.sort_values(by="start_time", ascending=False).iloc[0]
+        latest_run_id = latest_run['run_id']  # Extract the run ID of the latest run
+        model_uri = f"runs:/{latest_run_id}/best_model"
+        global loaded_model_from_mlflow
+        if loaded_model_from_mlflow is None:
+            loaded_model_from_mlflow = mlflow.sklearn.load_model(model_uri)
+
+        predictions = loaded_model_from_mlflow.predict([sentence])
+
+        predicted_class_string = translate_to_english(predictions[0])
+
+        response = {
+            "MLFLOW Model predicted_class": str(predictions[0]),
+            "Equivalent english translation": predicted_class_string
+        }
+        # Return the predicted class as a JSON response
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/mlops/list_mlflow_experiments', methods=['GET'])
 def list_mlflow_experiments():
     experiments = mlflow.search_experiments(filter_string=f'name="Twitter_Sentiment_Analysis"')
     experiment_results = []
-
 
     # Loop through each experiment
     for experiment in experiments:
@@ -128,9 +176,7 @@ def list_mlflow_experiments():
             params = mlflow.get_run(run_id).data.params
             metrics = mlflow.get_run(run_id).data.metrics
 
-            # Extract relevant parameters (you can add more as needed)
             best_params = params.get('best parameters', 'N/A')
-
 
             # Extract accuracy and other metrics (precision, recall, F1 score)
             accuracy = metrics.get('accuracy', 'N/A')
@@ -151,7 +197,7 @@ def list_mlflow_experiments():
                 "Best params found": best_params
             })
 
-    return jsonify({"experiment_results":experiment_results}), 200
+    return jsonify({"experiment_results": experiment_results}), 200
 
 
 if __name__ == '__main__':
