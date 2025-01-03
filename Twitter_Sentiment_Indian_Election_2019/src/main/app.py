@@ -16,6 +16,10 @@ df_global = pd.read_csv(data_file_path)
 
 best_model = None
 loaded_model_from_mlflow = None
+model_cv = None
+vectorizer_cv = None
+evaluation_scores_cv = None
+cv_scores = None
 
 # Hyperparameter grid for both TfidfVectorizer and Logistic Regression
 param_grid = {
@@ -37,9 +41,12 @@ def predict_sentiment():
             return jsonify({"error": "No sentence provided"}), 400
 
         # Predict sentiment using the model
-        model, vectorizer, evaluation_scores, cv_scores = train_model_with_cv(df_global)
+        global model_cv, vectorizer_cv, evaluation_scores_cv, cv_scores
 
-        predicted_class = predict(model, vectorizer, sentence)
+        if model_cv is None:
+            model_cv, vectorizer_cv, evaluation_scores_cv, cv_scores = train_model_with_cv(df_global)
+
+        predicted_class = predict(model_cv, vectorizer_cv, sentence)
         predicted_class_string = translate_to_english(predicted_class)
         response = {
             "predicted_class": str(predicted_class),
@@ -100,7 +107,6 @@ def predict_sentiment_best_model():
                 return jsonify("Error: The file 'best_model_twitter_senti.pkl' was not found. Please train the model "
                                "first using http://localhost:5000/mlops/retrain_on_demand"), 500
 
-
         if best_model is None:
             return jsonify({"error": "Model not trained yet"}), 400
 
@@ -117,7 +123,6 @@ def predict_sentiment_best_model():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 @app.route('/mlops/predict_sentiment_best_model_mlflow', methods=['GET'])
@@ -155,6 +160,7 @@ def predict_sentiment_best_model_mlflow():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/mlops/list_mlflow_experiments', methods=['GET'])
 def list_mlflow_experiments():
@@ -204,6 +210,7 @@ def list_mlflow_experiments():
 @app.route('/mlops/test_service_after_deploy', methods=['GET'])
 def test_service_after_deploy():
     return "App is running good and accessible"
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

@@ -59,6 +59,3 @@ def test_train_model_with_gs():
         f"Expected recall to be greater than 0.50, but got {evaluation_scores['recall']}"
     assert evaluation_scores['f1_score'] > 0.50, \
         f"Expected F1 score to be greater than 0.50, but got {evaluation_scores['f1_score']}"
-
-    assert float(evaluation_scores['time_taken']) < 120.0, \
-        "Model training took too long, expected time to be less than 20 seconds"

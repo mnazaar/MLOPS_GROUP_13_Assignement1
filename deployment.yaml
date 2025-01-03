@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: mlops-deploy
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mlops-app
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: mlops-container
-        image: nazaarblue/mlops_twitter_senti:1.0.1
+        image: nazaarblue/mlops_twitter_senti:1.0.3
         imagePullPolicy: Always
         ports:
         - containerPort: 5001
