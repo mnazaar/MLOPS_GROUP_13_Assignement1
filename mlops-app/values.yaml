@@ -1,0 +1,13 @@
+# General Application Configuration
+appName: mlops-app
+appVersion: v2
+containerName: mlops-container
+replicaCount: 3
+
+# Image Configuration
+image:
+  repository: nazaarblue/mlops_twitter_senti
+  tag: 1.0.1
+
+# Container Port Configuration
+containerPort: 5001
