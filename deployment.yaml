@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlops-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlops-app
+      version: "v1"
+  template:
+    metadata:
+      labels:
+        app: mlops-app
+        version: "v1"
+    spec:
+      containers:
+      - name: mlops-container
+        image: nazaarblue/mlops_twitter_senti:1.0.3
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlops-lb
+spec:
+  type: LoadBalancer
+  selector:
+    app: mlops-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5001
