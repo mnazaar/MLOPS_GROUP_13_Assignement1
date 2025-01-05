@@ -15,19 +15,23 @@ import mlflow
 
 pkl_file_path = os.getenv("PKL_FILE_PATH")
 
+
 def train_model_with_gs(df_local, param_grid):
     download_nlp()
-    df_local['cleaner_text'] = df_local['clean_text'].apply(preprocess)
-    df_local = df_local.dropna(subset=['category'])
-    df_local = df_local.dropna(subset=['cleaner_text'])
+    df_local['cleaner_tweet'] = df_local['tweet'].apply(preprocess)
 
-    documents = df_local['cleaner_text']
+    number_of_records = len(df_local)
+
+    df_local = df_local.dropna(subset=['category'])
+    df_local = df_local.dropna(subset=['cleaner_tweet'])
+
+    documents = df_local['cleaner_tweet']
     labels = df_local['category']
+    # Define pipeline with TfidfVectorizer and LogisticRegression
 
     start_time = time.time()
     x_train, x_test, y_train, y_test = train_test_split(documents, labels, test_size=0.2, random_state=42)
 
-    # Define pipeline with TfidfVectorizer and LogisticRegression
     pipeline = Pipeline([
         ('tfidf', TfidfVectorizer()),  # Placeholder for TF-IDF
         ('clf', LogisticRegression())  # Logistic Regression classifier
@@ -41,9 +45,10 @@ def train_model_with_gs(df_local, param_grid):
         mlflow.create_experiment('Twitter_Sentiment_Analysis')
 
     mlflow.set_experiment('Twitter_Sentiment_Analysis')
-
     with mlflow.start_run():
+        mlflow.set_tag("Dataset Size", f"{number_of_records} Tweets")
         grid_search.fit(documents, labels)
+
 
         best_model = grid_search.best_estimator_
         lr_y_predictions = best_model.predict(x_test)
