@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: mlops-container
-        image: nazaarblue/mlops_twitter_senti:1.0.3
+        image: nazaarblue/mlops_twitter_senti:1.0.5
         imagePullPolicy: Always
         ports:
         - containerPort: 5001

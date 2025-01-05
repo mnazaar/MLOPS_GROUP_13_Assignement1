@@ -13,6 +13,8 @@ spec:
       labels:
         app: {{ .Values.appName }}
         version: {{ .Values.appVersion }}
+      annotations:
+        timestamp: {{ now | quote }}
     spec:
       containers:
       - name: mlops-container
