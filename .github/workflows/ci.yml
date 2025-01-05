@@ -82,7 +82,7 @@ jobs:
     - name: Push Docker image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/mlops_twitter_senti:latest
 
- deploy:
+  deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
 
