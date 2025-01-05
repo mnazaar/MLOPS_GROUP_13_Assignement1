@@ -3,8 +3,6 @@ import joblib
 import mlflow
 import pandas as pd
 from flask import Flask, request, jsonify
-from Twitter_Sentiment_Indian_Election_2019.src.main.predict import predict
-from Twitter_Sentiment_Indian_Election_2019.src.main.train_model import train_model_with_cv
 from Twitter_Sentiment_Indian_Election_2019.src.main.train_model_with_grid_search import train_model_with_gs
 
 app = Flask(__name__)
@@ -28,46 +26,6 @@ param_grid = {
     'clf__penalty': ['l1', 'l2'],  # L2 regularization
     'clf__max_iter': [100, 500, 1000]  # max_iter for Logistic Regression as a hyperparameter
 }
-
-
-@app.route('/mlops/predict_election_sentiment', methods=['GET'])
-def predict_sentiment():
-    try:
-        # Get the sentence from the POST request
-        data = request.get_json()
-        sentence = data.get('sentence', None)
-
-        if not sentence:
-            return jsonify({"error": "No sentence provided"}), 400
-
-        # Predict sentiment using the model
-        global model_cv, vectorizer_cv, evaluation_scores_cv, cv_scores
-
-        if model_cv is None:
-            model_cv, vectorizer_cv, evaluation_scores_cv, cv_scores = train_model_with_cv(df_global)
-
-        predicted_class = predict(model_cv, vectorizer_cv, sentence)
-        predicted_class_string = translate_to_english(predicted_class)
-        response = {
-            "predicted_class": str(predicted_class),
-            "Equivalent english translation": predicted_class_string
-        }
-
-        # Return the predicted class as a JSON response
-        return jsonify(response), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-def translate_to_english(predicted_class):
-    if predicted_class == 0:
-        predicted_class_string = "Neutral Sentiment"
-    elif predicted_class == 1:
-        predicted_class_string = "Positive Sentiment"
-    else:
-        predicted_class_string = "Negative Sentiment"
-    return predicted_class_string
 
 
 @app.route('/mlops/retrain_on_demand', methods=['POST'])
@@ -210,6 +168,16 @@ def list_mlflow_experiments():
 @app.route('/mlops/test_service_after_deploy', methods=['GET'])
 def test_service_after_deploy():
     return "App is running good and accessible"
+
+
+def translate_to_english(predicted_class):
+    if predicted_class == 0:
+        predicted_class_string = "Neutral Sentiment"
+    elif predicted_class == 1:
+        predicted_class_string = "Positive Sentiment"
+    else:
+        predicted_class_string = "Negative Sentiment"
+    return predicted_class_string
 
 
 if __name__ == '__main__':
