@@ -50,6 +50,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/Twitter_Sentiment_Indian_Election_2019/src" >> $GITHUB_ENV
+
     - name: Run tests
       run: |
         pytest Twitter_Sentiment_Indian_Election_2019/src/tests
