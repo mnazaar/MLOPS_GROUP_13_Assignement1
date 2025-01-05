@@ -56,6 +56,10 @@ jobs:
       run: |
         echo "DATA_FILE_PATH=$(pwd)/Twitter_Sentiment_Indian_Election_2019/data/Twitter_Data.csv" >> $GITHUB_ENV
         echo "MODEL_PATH=$(pwd)/Twitter_Sentiment_Indian_Election_2019/pkl/best_model_twitter_senti.pkl" >> $GITHUB_ENV
+    
+    - name: Start MLflow server
+      run: |
+        nohup mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000 &
 
     - name: Run tests
       run: |
