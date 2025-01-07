@@ -74,7 +74,7 @@ def predict_sentiment_best_model():
 
         response = {
             "predicted_class": str(predictions[0]),
-            "Equivalent english translation - Showcase pipeline deployment": predicted_class_string
+            "Equivalent english translation - Showcase pipeline deployment - DURING DEMO": predicted_class_string
         }
         # Return the predicted class as a JSON response
         return jsonify(response), 200
@@ -181,4 +181,4 @@ def translate_to_english(predicted_class):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=5001, debug=True)
