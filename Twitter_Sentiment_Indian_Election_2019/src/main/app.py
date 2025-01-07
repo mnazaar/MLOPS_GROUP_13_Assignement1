@@ -74,7 +74,7 @@ def predict_sentiment_best_model():
 
         response = {
             "predicted_class": str(predictions[0]),
-            "Equivalent english translation - Showcase pipeline deployment - DEMO1": predicted_class_string
+            "Equivalent english translation - Showcase pipeline deployment - DURING DEMO NIGHT": predicted_class_string
         }
         # Return the predicted class as a JSON response
         return jsonify(response), 200
