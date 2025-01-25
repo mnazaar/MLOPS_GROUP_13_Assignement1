@@ -1,5 +1,5 @@
 outs:
-- md5: 1aa3c6eb2c26b5c43bc590353c6e9148
-  size: 20895533
+- md5: 3778858bcf10ebc79fe7253132a3bb19
+  size: 504715
   hash: md5
   path: Twitter_Data_remote.csv
